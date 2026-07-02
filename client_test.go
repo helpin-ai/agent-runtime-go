@@ -3,6 +3,7 @@ package sdk
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -70,5 +71,72 @@ func TestClientListMessagesUsesAppQuery(t *testing.T) {
 	}
 	if len(messages) != 1 || messages[0].ID != "msg-1" {
 		t.Fatalf("unexpected messages: %#v", messages)
+	}
+}
+
+func TestClientCodexDeviceCodeAuthUsesRunSubroutes(t *testing.T) {
+	var paths []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.Method+" "+r.URL.RequestURI())
+		if got := r.Header.Get("Authorization"); got != "Bearer token-1" {
+			t.Fatalf("authorization header = %q", got)
+		}
+		if got := r.URL.Query().Get("app_id"); got != "helpin" {
+			t.Fatalf("app_id query = %q", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(CodexAuthState{
+			Provider: "openai",
+			AuthMode: "chatgpt_device_code",
+			State:    CodexAuthStatePending,
+		})
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, WithAppID("helpin"), WithServiceToken("token-1"))
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	if state, err := client.StartCodexDeviceCodeAuth(context.Background(), "run-1"); err != nil || state.State != CodexAuthStatePending {
+		t.Fatalf("StartCodexDeviceCodeAuth state=%#v err=%v", state, err)
+	}
+	if state, err := client.CancelCodexDeviceCodeAuth(context.Background(), "run-1"); err != nil || state.State != CodexAuthStatePending {
+		t.Fatalf("CancelCodexDeviceCodeAuth state=%#v err=%v", state, err)
+	}
+
+	want := []string{
+		"POST /v1/runs/run-1/codex-auth/device-code/start?app_id=helpin",
+		"POST /v1/runs/run-1/codex-auth/device-code/cancel?app_id=helpin",
+	}
+	if len(paths) != len(want) {
+		t.Fatalf("paths = %#v, want %#v", paths, want)
+	}
+	for i := range want {
+		if paths[i] != want[i] {
+			t.Fatalf("paths[%d] = %q, want %q", i, paths[i], want[i])
+		}
+	}
+}
+
+func TestClientReturnsHTTPStatusError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "bad app", http.StatusBadRequest)
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, WithAppID("helpin"))
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	_, err = client.GetRun(context.Background(), "run-1")
+	if err == nil {
+		t.Fatal("expected HTTP error")
+	}
+	var statusErr *HTTPStatusError
+	if !errors.As(err, &statusErr) {
+		t.Fatalf("expected HTTPStatusError, got %T %[1]v", err)
+	}
+	if statusErr.StatusCode != http.StatusBadRequest || !statusErr.ClientError() {
+		t.Fatalf("unexpected status error: %#v", statusErr)
 	}
 }

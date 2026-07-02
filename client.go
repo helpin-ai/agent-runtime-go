@@ -21,6 +21,24 @@ type Client struct {
 
 type ClientOption func(*Client)
 
+type HTTPStatusError struct {
+	Method     string
+	Path       string
+	StatusCode int
+	Body       string
+}
+
+func (e *HTTPStatusError) Error() string {
+	if e == nil {
+		return ""
+	}
+	return fmt.Sprintf("agent runtime %s %s returned %d: %s", e.Method, e.Path, e.StatusCode, strings.TrimSpace(e.Body))
+}
+
+func (e *HTTPStatusError) ClientError() bool {
+	return e != nil && e.StatusCode >= 400 && e.StatusCode < 500
+}
+
 func WithHTTPClient(httpClient *http.Client) ClientOption {
 	return func(c *Client) {
 		if httpClient != nil {
@@ -98,6 +116,22 @@ func (c *Client) ResumeRun(ctx context.Context, runID string, req ResumeRunReque
 		return nil, err
 	}
 	return &run, nil
+}
+
+func (c *Client) StartCodexDeviceCodeAuth(ctx context.Context, runID string) (*CodexAuthState, error) {
+	var state CodexAuthState
+	if err := c.doJSON(ctx, http.MethodPost, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/codex-auth/device-code/start", c.appQuery(), nil, &state); err != nil {
+		return nil, err
+	}
+	return &state, nil
+}
+
+func (c *Client) CancelCodexDeviceCodeAuth(ctx context.Context, runID string) (*CodexAuthState, error) {
+	var state CodexAuthState
+	if err := c.doJSON(ctx, http.MethodPost, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/codex-auth/device-code/cancel", c.appQuery(), nil, &state); err != nil {
+		return nil, err
+	}
+	return &state, nil
 }
 
 func (c *Client) ApproveRun(ctx context.Context, runID string, externalActorID ...string) (*AgentRun, error) {
@@ -229,7 +263,12 @@ func (c *Client) doJSON(ctx context.Context, method, path string, query url.Valu
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		msg, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return fmt.Errorf("agent runtime %s %s returned %d: %s", method, path, resp.StatusCode, strings.TrimSpace(string(msg)))
+		return &HTTPStatusError{
+			Method:     method,
+			Path:       path,
+			StatusCode: resp.StatusCode,
+			Body:       strings.TrimSpace(string(msg)),
+		}
 	}
 	if out == nil {
 		return nil
