@@ -127,16 +127,17 @@ type TurnPolicy struct {
 }
 
 type AgentRunMessage struct {
-	ID              string          `json:"id"`
-	AppID           string          `json:"app_id"`
-	RunID           string          `json:"run_id"`
-	Role            string          `json:"role"`
-	Content         string          `json:"content"`
-	MessageType     string          `json:"message_type"`
-	ContentBlocks   json.RawMessage `json:"content_blocks,omitempty"`
-	ToolInvocations json.RawMessage `json:"tool_invocations,omitempty"`
-	SequenceNo      int             `json:"sequence_no"`
-	CreatedAt       time.Time       `json:"created_at"`
+	ID               string          `json:"id"`
+	AppID            string          `json:"app_id"`
+	RunID            string          `json:"run_id"`
+	RuntimeMessageID string          `json:"runtime_message_id,omitempty"`
+	Role             string          `json:"role"`
+	Content          string          `json:"content"`
+	MessageType      string          `json:"message_type"`
+	ContentBlocks    json.RawMessage `json:"content_blocks,omitempty"`
+	ToolInvocations  json.RawMessage `json:"tool_invocations,omitempty"`
+	SequenceNo       int             `json:"sequence_no"`
+	CreatedAt        time.Time       `json:"created_at"`
 }
 
 type AgentRunArtifact struct {
