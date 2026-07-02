@@ -40,6 +40,13 @@ const (
 	ResumeIntentReply          = "reply"
 	ResumeIntentApprove        = "approve"
 	ResumeIntentRequestChanges = "request_changes"
+	ResumeIntentAuthCompleted  = "auth_completed"
+
+	CodexAuthStateRequired  = "required"
+	CodexAuthStatePending   = "pending"
+	CodexAuthStateConnected = "connected"
+	CodexAuthStateFailed    = "failed"
+	CodexAuthStateCancelled = "cancelled"
 )
 
 type TargetRef struct {

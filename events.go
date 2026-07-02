@@ -18,6 +18,8 @@ const (
 
 	EventUsageCheckpoint = "usage.checkpoint"
 
+	EventCodexAuthStateChanged = "codex_auth.state_changed"
+
 	EventAssistantMessageStarted   = "assistant_message_started"
 	EventAssistantMessageDelta     = "assistant_message_delta"
 	EventAssistantMessageCompleted = "assistant_message_completed"
@@ -96,6 +98,18 @@ type PlanUpdatedEventData struct {
 	Data    map[string]interface{} `json:"data,omitempty"`
 }
 
+type CodexAuthStateEventData struct {
+	Provider        string `json:"provider,omitempty"`
+	AuthMode        string `json:"auth_mode,omitempty"`
+	State           string `json:"state"`
+	LoginID         string `json:"login_id,omitempty"`
+	AuthURL         string `json:"auth_url,omitempty"`
+	VerificationURL string `json:"verification_url,omitempty"`
+	UserCode        string `json:"user_code,omitempty"`
+	PlanType        string `json:"plan_type,omitempty"`
+	Error           string `json:"error,omitempty"`
+}
+
 type RunPlanStep struct {
 	Step   string `json:"step"`
 	Status string `json:"status"`
@@ -136,6 +150,15 @@ func (e EventEnvelope) ToolCall() (ToolCallEventData, bool, error) {
 		return ToolCallEventData{}, false, nil
 	}
 	var data ToolCallEventData
+	err := e.DecodeData(&data)
+	return data, err == nil, err
+}
+
+func (e EventEnvelope) CodexAuthState() (CodexAuthStateEventData, bool, error) {
+	if strings.TrimSpace(e.Type) != EventCodexAuthStateChanged {
+		return CodexAuthStateEventData{}, false, nil
+	}
+	var data CodexAuthStateEventData
 	err := e.DecodeData(&data)
 	return data, err == nil, err
 }

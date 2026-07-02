@@ -35,6 +35,33 @@ func TestParseEventEnvelopeAndUsageData(t *testing.T) {
 	}
 }
 
+func TestParseEventEnvelopeAndCodexAuthStateData(t *testing.T) {
+	payload, _ := json.Marshal(EventEnvelope{
+		EventID: "event-1",
+		AppID:   "helpin",
+		RunID:   "run-1",
+		Type:    EventCodexAuthStateChanged,
+		Data: map[string]interface{}{
+			"provider":         "openai",
+			"auth_mode":        "chatgpt_device_code",
+			"state":            CodexAuthStatePending,
+			"verification_url": "https://auth.example/device",
+			"user_code":        "ABCD-EFGH",
+		},
+	})
+	envelope, err := ParseEventEnvelope(payload)
+	if err != nil {
+		t.Fatalf("ParseEventEnvelope: %v", err)
+	}
+	data, ok, err := envelope.CodexAuthState()
+	if err != nil || !ok {
+		t.Fatalf("CodexAuthState ok=%v err=%v", ok, err)
+	}
+	if data.State != CodexAuthStatePending || data.UserCode != "ABCD-EFGH" {
+		t.Fatalf("unexpected auth data: %#v", data)
+	}
+}
+
 func TestParseEventEnvelopeRequiresIdentity(t *testing.T) {
 	if _, err := ParseEventEnvelope([]byte(`{"type":"run.completed"}`)); err == nil {
 		t.Fatal("expected identity validation error")
