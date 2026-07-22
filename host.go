@@ -5,6 +5,8 @@ import "encoding/json"
 const (
 	WorkspaceModeHostPrepared = "host_prepared"
 	WorkspaceModeRepository   = "repository"
+	WorkspaceAccessReadOnly   = "read_only"
+	WorkspaceAccessReadWrite  = "read_write"
 
 	CleanupAlways     = "always"
 	CleanupOnTerminal = "on_terminal"

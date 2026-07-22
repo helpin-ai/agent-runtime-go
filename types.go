@@ -13,8 +13,12 @@ const (
 	InvocationAutonomous  = "autonomous"
 	InvocationInteractive = "interactive"
 
-	ApprovalModeNever  = "never"
-	ApprovalModeAlways = "always"
+	ApprovalModeNever         = "never"
+	ApprovalModeMutatingTools = "mutating_tools"
+	ApprovalModeAlways        = "always"
+
+	ExecutionModeLightweight = "lightweight"
+	ExecutionModeDurable     = "durable"
 
 	RunStatusQueued    = "queued"
 	RunStatusRunning   = "running"
@@ -218,6 +222,8 @@ type ResumeRunRequest struct {
 	Content         string          `json:"content,omitempty"`
 	ResponsePayload json.RawMessage `json:"response_payload,omitempty"`
 	ExternalActorID string          `json:"external_actor_id,omitempty"`
+	ResumeID        string          `json:"resume_id,omitempty"`
+	InteractionID   string          `json:"interaction_id,omitempty"`
 }
 
 type CodexAuthState struct {
@@ -245,4 +251,83 @@ type AppendArtifactRequest struct {
 	StorageMode   string          `json:"storage_mode,omitempty"`
 	InlineContent string          `json:"inline_content,omitempty"`
 	Metadata      json.RawMessage `json:"metadata,omitempty"`
+}
+
+type ProviderCapability struct {
+	Name              string `json:"name"`
+	Configured        bool   `json:"configured"`
+	DefaultModel      string `json:"default_model,omitempty"`
+	BaseURLOverridden bool   `json:"base_url_overridden"`
+}
+
+type StoreInfo struct {
+	Driver   string `json:"driver"`
+	InMemory bool   `json:"in_memory"`
+}
+
+type DurableInfo struct {
+	Enabled         bool   `json:"enabled"`
+	TemporalAddress string `json:"temporal_address,omitempty"`
+	Namespace       string `json:"namespace,omitempty"`
+}
+
+type SkillInfo struct {
+	Key         string `json:"key"`
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+}
+
+type AppComponent struct {
+	Name           string `json:"name,omitempty"`
+	Kind           string `json:"kind,omitempty"`
+	Configured     bool   `json:"configured"`
+	URL            string `json:"url,omitempty"`
+	Transport      string `json:"transport,omitempty"`
+	AuthConfigured bool   `json:"auth_configured"`
+	Status         string `json:"status,omitempty"`
+	HTTPStatus     int    `json:"http_status,omitempty"`
+	Error          string `json:"error,omitempty"`
+}
+
+type AppSummary struct {
+	AppID      string         `json:"app_id"`
+	Components []AppComponent `json:"components,omitempty"`
+}
+
+type Capabilities struct {
+	RuntimeKinds       []string             `json:"runtime_kinds"`
+	Providers          []ProviderCapability `json:"providers"`
+	Store              StoreInfo            `json:"store"`
+	Durable            DurableInfo          `json:"durable"`
+	Skills             []SkillInfo          `json:"skills,omitempty"`
+	Apps               []AppSummary         `json:"apps,omitempty"`
+	ServiceAuthEnabled bool                 `json:"service_auth_enabled"`
+	Tools              []Tool               `json:"tools"`
+}
+
+type RunSearchRequest struct {
+	Query  string
+	Status string
+	Limit  int
+	Offset int
+}
+
+type RunPage struct {
+	Items  []AgentRun `json:"items"`
+	Total  int64      `json:"total"`
+	Limit  int        `json:"limit"`
+	Offset int        `json:"offset"`
+}
+
+type RunExecutionInfo struct {
+	ExecutionMode        string     `json:"execution_mode"`
+	State                string     `json:"state"`
+	WorkflowID           string     `json:"workflow_id,omitempty"`
+	TemporalRunID        string     `json:"temporal_run_id,omitempty"`
+	TaskQueue            string     `json:"task_queue,omitempty"`
+	HistoryLength        int64      `json:"history_length,omitempty"`
+	HistorySizeBytes     int64      `json:"history_size_bytes,omitempty"`
+	StateTransitionCount int64      `json:"state_transition_count,omitempty"`
+	StartedAt            *time.Time `json:"started_at,omitempty"`
+	ClosedAt             *time.Time `json:"closed_at,omitempty"`
 }

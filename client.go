@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -83,6 +84,41 @@ func (c *Client) AppID() string {
 	return c.appID
 }
 
+func (c *Client) Health(ctx context.Context) (map[string]string, error) {
+	var health map[string]string
+	if err := c.doJSON(ctx, http.MethodGet, "/healthz", nil, nil, &health); err != nil {
+		return nil, err
+	}
+	return health, nil
+}
+
+func (c *Client) GetCapabilities(ctx context.Context) (*Capabilities, error) {
+	var capabilities Capabilities
+	if err := c.doJSON(ctx, http.MethodGet, "/v1/capabilities", c.appQuery(), nil, &capabilities); err != nil {
+		return nil, err
+	}
+	return &capabilities, nil
+}
+
+func (c *Client) GetAppHealth(ctx context.Context) (*AppSummary, error) {
+	var summary AppSummary
+	if err := c.doJSON(ctx, http.MethodGet, "/v1/app-health", c.appQuery(), nil, &summary); err != nil {
+		return nil, err
+	}
+	return &summary, nil
+}
+
+func (c *Client) CreateAgent(ctx context.Context, agent Agent) (*Agent, error) {
+	if strings.TrimSpace(agent.AppID) == "" {
+		agent.AppID = c.AppID()
+	}
+	var out Agent
+	if err := c.doJSON(ctx, http.MethodPost, "/v1/agents", nil, agent, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *Client) StartRun(ctx context.Context, req StartRunRequest) (*AgentRun, error) {
 	if strings.TrimSpace(req.AppID) == "" {
 		req.AppID = c.AppID()
@@ -108,6 +144,27 @@ func (c *Client) ListRuns(ctx context.Context) ([]AgentRun, error) {
 		return nil, err
 	}
 	return runs, nil
+}
+
+func (c *Client) SearchRuns(ctx context.Context, search RunSearchRequest) (*RunPage, error) {
+	query := c.appQuery()
+	if value := strings.TrimSpace(search.Query); value != "" {
+		query.Set("q", value)
+	}
+	if value := strings.TrimSpace(search.Status); value != "" {
+		query.Set("status", value)
+	}
+	if search.Limit > 0 {
+		query.Set("limit", strconv.Itoa(search.Limit))
+	}
+	if search.Offset > 0 {
+		query.Set("offset", strconv.Itoa(search.Offset))
+	}
+	var page RunPage
+	if err := c.doJSON(ctx, http.MethodGet, "/v1/runs/search", query, nil, &page); err != nil {
+		return nil, err
+	}
+	return &page, nil
 }
 
 func (c *Client) ResumeRun(ctx context.Context, runID string, req ResumeRunRequest) (*AgentRun, error) {
@@ -197,12 +254,46 @@ func (c *Client) ListInteractions(ctx context.Context, runID string) ([]AgentRun
 	return interactions, nil
 }
 
+func (c *Client) ListRunEvents(ctx context.Context, runID string) ([]EventEnvelope, error) {
+	var events []EventEnvelope
+	if err := c.doJSON(ctx, http.MethodGet, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/events/history", c.appQuery(), nil, &events); err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+func (c *Client) GetRunExecution(ctx context.Context, runID string) (*RunExecutionInfo, error) {
+	var info RunExecutionInfo
+	if err := c.doJSON(ctx, http.MethodGet, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/execution", c.appQuery(), nil, &info); err != nil {
+		return nil, err
+	}
+	return &info, nil
+}
+
 func (c *Client) ListToolCalls(ctx context.Context, runID string) ([]ToolCall, error) {
 	var calls []ToolCall
 	if err := c.doJSON(ctx, http.MethodGet, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/tool-calls", c.appQuery(), nil, &calls); err != nil {
 		return nil, err
 	}
 	return calls, nil
+}
+
+func (c *Client) ListRunTools(ctx context.Context, runID string) ([]Tool, error) {
+	var response struct {
+		Tools []Tool `json:"tools"`
+	}
+	if err := c.doJSON(ctx, http.MethodGet, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/tools", c.appQuery(), nil, &response); err != nil {
+		return nil, err
+	}
+	return response.Tools, nil
+}
+
+func (c *Client) CallRunTool(ctx context.Context, runID string, req RunToolCallRequest) (*ToolCallResult, error) {
+	var result ToolCallResult
+	if err := c.doJSON(ctx, http.MethodPost, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/tools", c.appQuery(), req, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (c *Client) ListAgents(ctx context.Context) ([]Agent, error) {
@@ -222,8 +313,16 @@ func (c *Client) GetAgent(ctx context.Context, agentID string) (*Agent, error) {
 }
 
 func (c *Client) UpsertAgent(ctx context.Context, agent Agent) (*Agent, error) {
+	return c.UpdateAgent(ctx, agent.ID, agent)
+}
+
+func (c *Client) UpdateAgent(ctx context.Context, agentID string, agent Agent) (*Agent, error) {
+	if strings.TrimSpace(agent.AppID) == "" {
+		agent.AppID = c.AppID()
+	}
+	agent.ID = strings.TrimSpace(agentID)
 	var out Agent
-	if err := c.doJSON(ctx, http.MethodPut, "/v1/agents/"+url.PathEscape(strings.TrimSpace(agent.ID)), c.appQuery(), agent, &out); err != nil {
+	if err := c.doJSON(ctx, http.MethodPut, "/v1/agents/"+url.PathEscape(agent.ID), c.appQuery(), agent, &out); err != nil {
 		return nil, err
 	}
 	return &out, nil

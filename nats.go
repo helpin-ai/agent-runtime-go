@@ -45,7 +45,7 @@ type NATSConsumer struct {
 	cfg NATSConsumerConfig
 }
 
-type NATSEventHandler func(ctx context.Context, event EventEnvelope) error
+type NATSEventHandler = EventHandler
 
 func NewNATSConsumer(cfg NATSConsumerConfig) *NATSConsumer {
 	return &NATSConsumer{cfg: cfg.withDefaults()}
@@ -210,7 +210,8 @@ func (cfg NATSConsumerConfig) process(ctx context.Context, msg *nats.Msg, handle
 	case errors.Is(err, ErrDropEvent):
 		_ = msg.Ack()
 	case errors.Is(err, ErrRetryEvent):
-		if cfg.deliveries(msg) >= uint64(cfg.MaxDeliver) {
+		deliveries := cfg.deliveries(msg)
+		if deliveries >= uint64(cfg.MaxDeliver) {
 			cfg.log().ErrorContext(ctx, "agent runtime nats consumer dropping event after max deliveries",
 				"runtime_run_id", event.RunID,
 				"host_run_id", event.HostRunID,
@@ -219,15 +220,20 @@ func (cfg NATSConsumerConfig) process(ctx context.Context, msg *nats.Msg, handle
 			_ = msg.Ack()
 			return
 		}
-		_ = msg.NakWithDelay(cfg.retryDelay())
+		_ = msg.NakWithDelay(cfg.retryDelay(deliveries))
 	default:
+		deliveries := cfg.deliveries(msg)
 		cfg.log().ErrorContext(ctx, "agent runtime nats consumer handler failed",
 			"runtime_run_id", event.RunID,
 			"host_run_id", event.HostRunID,
 			"event_type", event.Type,
 			"error", err,
 		)
-		_ = msg.NakWithDelay(cfg.retryDelay())
+		if deliveries >= uint64(cfg.MaxDeliver) {
+			_ = msg.Ack()
+			return
+		}
+		_ = msg.NakWithDelay(cfg.retryDelay(deliveries))
 	}
 }
 
@@ -239,11 +245,18 @@ func (cfg NATSConsumerConfig) deliveries(msg *nats.Msg) uint64 {
 	return meta.NumDelivered
 }
 
-func (cfg NATSConsumerConfig) retryDelay() time.Duration {
+func (cfg NATSConsumerConfig) retryDelay(deliveries uint64) time.Duration {
 	if len(cfg.BackOff) == 0 {
 		return 5 * time.Second
 	}
-	return cfg.BackOff[0]
+	if deliveries == 0 {
+		deliveries = 1
+	}
+	index := int(deliveries - 1)
+	if index >= len(cfg.BackOff) {
+		index = len(cfg.BackOff) - 1
+	}
+	return cfg.BackOff[index]
 }
 
 func (cfg NATSConsumerConfig) log() *slog.Logger {

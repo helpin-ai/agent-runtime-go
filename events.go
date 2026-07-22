@@ -1,11 +1,14 @@
 package sdk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 )
+
+type EventHandler func(ctx context.Context, event EventEnvelope) error
 
 const (
 	EventRunQueued    = "run.queued"
@@ -168,8 +171,15 @@ func ParseEventEnvelope(payload []byte) (*EventEnvelope, error) {
 	if err := json.Unmarshal(payload, &envelope); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(envelope.AppID) == "" || strings.TrimSpace(envelope.RunID) == "" || strings.TrimSpace(envelope.Type) == "" {
-		return nil, fmt.Errorf("event envelope requires app_id, run_id, and type")
+	if err := validateEventEnvelope(envelope); err != nil {
+		return nil, err
 	}
 	return &envelope, nil
+}
+
+func validateEventEnvelope(envelope EventEnvelope) error {
+	if strings.TrimSpace(envelope.AppID) == "" || strings.TrimSpace(envelope.RunID) == "" || strings.TrimSpace(envelope.Type) == "" {
+		return fmt.Errorf("event envelope requires app_id, run_id, and type")
+	}
+	return nil
 }
