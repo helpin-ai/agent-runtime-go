@@ -9,6 +9,9 @@ func TestNATSSubjectHelpers(t *testing.T) {
 	if got := AppEventSubject("helpin.stage"); got != "agent-runtime.events.helpin_stage.>" {
 		t.Fatalf("unexpected app subject %q", got)
 	}
+	if got := V2AppEventSubject("helpin.stage"); got != "agent-runtime.events.v2.helpin_stage.>" {
+		t.Fatalf("unexpected v2 app subject %q", got)
+	}
 	event := EventEnvelope{
 		AppID: "helpin.stage",
 		RunID: "run/1",
@@ -16,6 +19,9 @@ func TestNATSSubjectHelpers(t *testing.T) {
 	}
 	if got := RenderNATSSubject("", event); got != "agent-runtime.events.helpin_stage.run_1.assistant_message_delta" {
 		t.Fatalf("unexpected rendered subject %q", got)
+	}
+	if got := RenderNATSV2Subject(event); got != "agent-runtime.events.v2.helpin_stage.run_1.assistant_message_delta" {
+		t.Fatalf("unexpected rendered v2 subject %q", got)
 	}
 	event.Type = EventRunCompleted
 	if got := RenderNATSSubject("", event); got != "agent-runtime.events.helpin_stage.run_1.run.completed" {

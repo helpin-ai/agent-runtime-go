@@ -12,12 +12,14 @@ import (
 
 func TestClientStartRunDefaultsAppIDAndAuth(t *testing.T) {
 	var gotAuth string
+	var gotEventProtocol string
 	var got StartRunRequest
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != "/v1/runs" {
 			t.Fatalf("unexpected request %s %s", r.Method, r.URL.Path)
 		}
 		gotAuth = r.Header.Get("Authorization")
+		gotEventProtocol = r.Header.Get(EventProtocolHeader)
 		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
@@ -26,7 +28,7 @@ func TestClientStartRunDefaultsAppIDAndAuth(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := NewClient(server.URL, WithAppID("helpin"), WithServiceToken("token-1"))
+	client, err := NewClient(server.URL, WithAppID("helpin"), WithServiceToken("token-1"), WithEventProtocol("v2"))
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
@@ -43,6 +45,9 @@ func TestClientStartRunDefaultsAppIDAndAuth(t *testing.T) {
 	}
 	if gotAuth != "Bearer token-1" {
 		t.Fatalf("authorization header = %q", gotAuth)
+	}
+	if gotEventProtocol != "v2" {
+		t.Fatalf("event protocol header = %q", gotEventProtocol)
 	}
 	if run.ID != "run-1" || run.AppID != "helpin" {
 		t.Fatalf("unexpected run: %#v", run)

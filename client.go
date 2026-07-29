@@ -13,11 +13,14 @@ import (
 	"time"
 )
 
+const EventProtocolHeader = "X-Agent-Runtime-Event-Protocol"
+
 type Client struct {
-	baseURL    string
-	appID      string
-	token      string
-	httpClient *http.Client
+	baseURL       string
+	appID         string
+	token         string
+	eventProtocol string
+	httpClient    *http.Client
 }
 
 type ClientOption func(*Client)
@@ -57,6 +60,15 @@ func WithServiceToken(token string) ClientOption {
 func WithAppID(appID string) ClientOption {
 	return func(c *Client) {
 		c.appID = strings.TrimSpace(appID)
+	}
+}
+
+// WithEventProtocol declares the host projection contract expected for new
+// runs. Older clients omit the header and continue to use the runtime's v1
+// compatibility behavior.
+func WithEventProtocol(protocol string) ClientOption {
+	return func(c *Client) {
+		c.eventProtocol = strings.ToLower(strings.TrimSpace(protocol))
 	}
 }
 
@@ -230,6 +242,31 @@ func (c *Client) ListMessages(ctx context.Context, runID string) ([]AgentRunMess
 	return messages, nil
 }
 
+// ListV2Events returns durable ordered events after the supplied per-run
+// sequence. The v1 client surface remains unchanged for existing consumers.
+func (c *Client) ListV2Events(ctx context.Context, runID string, afterSequence int64) (*EventListResponse, error) {
+	query := c.appQuery()
+	if afterSequence > 0 {
+		query.Set("after_sequence", fmt.Sprintf("%d", afterSequence))
+	}
+	var response EventListResponse
+	path := "/v2/runs/" + url.PathEscape(strings.TrimSpace(runID)) + "/events"
+	if err := c.doJSON(ctx, http.MethodGet, path, query, nil, &response); err != nil {
+		return nil, err
+	}
+	return &response, nil
+}
+
+// GetV2StreamState returns the authoritative materialized stream snapshot.
+func (c *Client) GetV2StreamState(ctx context.Context, runID string) (*StreamStateSnapshot, error) {
+	var snapshot StreamStateSnapshot
+	path := "/v2/runs/" + url.PathEscape(strings.TrimSpace(runID)) + "/stream-state"
+	if err := c.doJSON(ctx, http.MethodGet, path, c.appQuery(), nil, &snapshot); err != nil {
+		return nil, err
+	}
+	return &snapshot, nil
+}
+
 func (c *Client) AppendArtifact(ctx context.Context, runID string, req AppendArtifactRequest) (*AgentRunArtifact, error) {
 	var artifact AgentRunArtifact
 	if err := c.doJSON(ctx, http.MethodPost, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/artifacts", c.appQuery(), req, &artifact); err != nil {
@@ -354,6 +391,9 @@ func (c *Client) doJSON(ctx context.Context, method, path string, query url.Valu
 	req.Header.Set("Accept", "application/json")
 	if c.token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+	if c.eventProtocol != "" {
+		req.Header.Set(EventProtocolHeader, c.eventProtocol)
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
