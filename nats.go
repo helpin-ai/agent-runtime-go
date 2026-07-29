@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	DefaultNATSStreamName      = "AGENT_RUNTIME_EVENTS"
-	DefaultNATSStreamSubject   = "agent-runtime.events.>"
-	DefaultNATSSubjectTemplate = "agent-runtime.events.{app_id}.{run_id}.{event_type}"
+	DefaultNATSStreamName        = "AGENT_RUNTIME_EVENTS"
+	DefaultNATSStreamSubject     = "agent-runtime.events.>"
+	DefaultNATSSubjectTemplate   = "agent-runtime.events.{app_id}.{run_id}.{event_type}"
+	DefaultNATSV2SubjectTemplate = "agent-runtime.events.v2.{app_id}.{run_id}.{event_type}"
 )
 
 var (
@@ -299,6 +300,16 @@ func EnsureNATSStream(js nats.JetStreamContext, stream string, subjects []string
 
 func AppEventSubject(appID string) string {
 	return "agent-runtime.events." + NATSAppToken(appID) + ".>"
+}
+
+// V2AppEventSubject returns the isolated v2 subject for one host app.
+func V2AppEventSubject(appID string) string {
+	return "agent-runtime.events.v2." + NATSAppToken(appID) + ".>"
+}
+
+// RenderNATSV2Subject renders an event on the versioned v2 subject family.
+func RenderNATSV2Subject(event EventEnvelope) string {
+	return RenderNATSSubject(DefaultNATSV2SubjectTemplate, event)
 }
 
 func RenderNATSSubject(template string, event EventEnvelope) string {

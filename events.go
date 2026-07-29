@@ -11,6 +11,8 @@ import (
 type EventHandler func(ctx context.Context, event EventEnvelope) error
 
 const (
+	EventSchemaVersionV2 = "2"
+
 	EventRunQueued    = "run.queued"
 	EventRunStarted   = "run.started"
 	EventRunResumed   = "run.resumed"
@@ -52,14 +54,36 @@ type Event struct {
 }
 
 type EventEnvelope struct {
-	EventID    string                 `json:"event_id"`
-	SentAt     time.Time              `json:"sent_at"`
-	SequenceNo int64                  `json:"sequence_no"`
-	AppID      string                 `json:"app_id"`
-	RunID      string                 `json:"run_id"`
-	HostRunID  string                 `json:"host_run_id,omitempty"`
-	Type       string                 `json:"type"`
-	Data       map[string]interface{} `json:"data,omitempty"`
+	EventID       string                 `json:"event_id"`
+	SentAt        time.Time              `json:"sent_at"`
+	SequenceNo    int64                  `json:"sequence_no"`
+	AppID         string                 `json:"app_id"`
+	RunID         string                 `json:"run_id"`
+	HostRunID     string                 `json:"host_run_id,omitempty"`
+	SchemaVersion string                 `json:"schema_version,omitempty"`
+	TurnID        string                 `json:"turn_id,omitempty"`
+	SegmentID     string                 `json:"segment_id,omitempty"`
+	Revision      int64                  `json:"revision,omitempty"`
+	BaseRevision  int64                  `json:"base_revision,omitempty"`
+	Type          string                 `json:"type"`
+	Data          map[string]interface{} `json:"data,omitempty"`
+}
+
+// StreamStateSnapshot is the authoritative materialized state of a v2 run
+// stream through ThroughSequence. State is intentionally JSON-shaped so hosts
+// can project provider-neutral turns without importing runtime internals.
+type StreamStateSnapshot struct {
+	SchemaVersion   string                 `json:"schema_version"`
+	RunID           string                 `json:"run_id"`
+	ThroughSequence int64                  `json:"through_sequence"`
+	State           map[string]interface{} `json:"state"`
+}
+
+// EventListResponse is the replay response returned by the v2 events API.
+type EventListResponse struct {
+	Events              []EventEnvelope      `json:"events"`
+	NextSequenceNo      int64                `json:"next_sequence_no"`
+	StreamStateSnapshot *StreamStateSnapshot `json:"stream_state_snapshot,omitempty"`
 }
 
 type UsageCheckpointEventData struct {

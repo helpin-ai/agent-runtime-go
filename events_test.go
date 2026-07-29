@@ -67,3 +67,19 @@ func TestParseEventEnvelopeRequiresIdentity(t *testing.T) {
 		t.Fatal("expected identity validation error")
 	}
 }
+
+func TestParseEventEnvelopeV2Metadata(t *testing.T) {
+	payload, _ := json.Marshal(EventEnvelope{
+		EventID: "event-v2", AppID: "helpin", RunID: "run-1",
+		SchemaVersion: EventSchemaVersionV2, SequenceNo: 7,
+		TurnID: "turn-1", SegmentID: "message-1", Revision: 3,
+		BaseRevision: 2, Type: EventAssistantMessageDelta,
+	})
+	envelope, err := ParseEventEnvelope(payload)
+	if err != nil {
+		t.Fatalf("ParseEventEnvelope: %v", err)
+	}
+	if envelope.SchemaVersion != EventSchemaVersionV2 || envelope.SequenceNo != 7 || envelope.SegmentID != "message-1" || envelope.BaseRevision != 2 {
+		t.Fatalf("unexpected v2 metadata: %#v", envelope)
+	}
+}
