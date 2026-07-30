@@ -35,6 +35,34 @@ The client covers runtime capabilities and app health, agents, runs, persisted
 event history, execution details, run tools, Codex device-code authentication,
 and live Server-Sent Events.
 
+Apps can attach workspace-selected remote MCP servers to an individual run.
+The app owns MCP installation and OAuth; it should refresh or exchange the
+workspace credential before `StartRun` and send only a run-scoped token.
+
+```go
+run, err := client.StartRun(ctx, sdk.StartRunRequest{
+    AgentID: "agent_123",
+    Target: sdk.TargetRef{Type: "workspace", ID: "workspace_123"},
+    MCPServers: []sdk.RunMCPServer{{
+        ServerID:   "workspace_mcp_456",
+        ServerName: "github",
+        Transport:  sdk.MCPTransportStreamableHTTP,
+        URL:        "https://mcp.example.com/mcp",
+        Tools: []sdk.RunMCPTool{
+            {Name: "get_issue", Access: sdk.MCPToolAccessRead},
+            {Name: "create_issue", Access: sdk.MCPToolAccessWrite},
+        },
+        Credential: &sdk.RunMCPCredential{
+            Type:        sdk.MCPCredentialBearerToken,
+            AccessToken: shortLivedAccessToken,
+            ExpiresAt:   &expiresAt,
+        },
+    }},
+})
+```
+
+Credentials are request-only and are not included in the returned run.
+
 ```go
 err = client.StreamRunEvents(ctx, runID, func(ctx context.Context, event sdk.EventEnvelope) error {
     log.Printf("%d %s", event.SequenceNo, event.Type)

@@ -51,6 +51,14 @@ const (
 	CodexAuthStateConnected = "connected"
 	CodexAuthStateFailed    = "failed"
 	CodexAuthStateCancelled = "cancelled"
+
+	MCPTransportStreamableHTTP = "streamable_http"
+
+	MCPCredentialBearerToken = "bearer_token"
+	MCPCredentialHeaders     = "headers"
+
+	MCPToolAccessRead  = "read"
+	MCPToolAccessWrite = "write"
 )
 
 type TargetRef struct {
@@ -215,6 +223,36 @@ type StartRunRequest struct {
 	Trigger         map[string]interface{} `json:"trigger,omitempty"`
 	Metadata        map[string]interface{} `json:"metadata,omitempty"`
 	TurnPolicy      TurnPolicy             `json:"turn_policy,omitempty"`
+	MCPServers      []RunMCPServer         `json:"mcp_servers,omitempty"`
+}
+
+// RunMCPServer attaches an app-managed remote MCP server to one agent run.
+// The host app remains responsible for server discovery, workspace policy,
+// OAuth/browser consent, token refresh, and revocation. Credentials are
+// request-only and are never returned as part of AgentRun.
+type RunMCPServer struct {
+	ServerID   string            `json:"server_id"`
+	ServerName string            `json:"server_name"`
+	Transport  string            `json:"transport"`
+	URL        string            `json:"url"`
+	Tools      []RunMCPTool      `json:"tools"`
+	Credential *RunMCPCredential `json:"credential,omitempty"`
+}
+
+// RunMCPTool is the exact host-authorized tool policy for one MCP server.
+// Access controls whether Agent Runtime treats a call as mutating for approval.
+type RunMCPTool struct {
+	Name   string `json:"name"`
+	Access string `json:"access"`
+}
+
+// RunMCPCredential carries credentials for one run. BearerToken uses
+// AccessToken. Headers uses Headers. ExpiresAt is checked before execution.
+type RunMCPCredential struct {
+	Type        string            `json:"type"`
+	AccessToken string            `json:"access_token,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty"`
+	ExpiresAt   *time.Time        `json:"expires_at,omitempty"`
 }
 
 type ResumeRunRequest struct {
@@ -303,6 +341,13 @@ type Capabilities struct {
 	Apps               []AppSummary         `json:"apps,omitempty"`
 	ServiceAuthEnabled bool                 `json:"service_auth_enabled"`
 	Tools              []Tool               `json:"tools"`
+	RunMCP             RunMCPCapability     `json:"run_mcp"`
+}
+
+type RunMCPCapability struct {
+	Supported                      bool     `json:"supported"`
+	Transports                     []string `json:"transports"`
+	CredentialEncryptionConfigured bool     `json:"credential_encryption_configured"`
 }
 
 type RunSearchRequest struct {

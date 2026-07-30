@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestClientStartRunDefaultsAppIDAndAuth(t *testing.T) {
@@ -32,16 +34,29 @@ func TestClientStartRunDefaultsAppIDAndAuth(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
+	expiresAt := time.Now().Add(time.Hour).UTC()
 	run, err := client.StartRun(context.Background(), StartRunRequest{
 		HostRunID: "host-1",
 		AgentID:   "agent-1",
 		Target:    TargetRef{Type: "task", ID: "task-1"},
+		MCPServers: []RunMCPServer{{
+			ServerID: "workspace-mcp-1", ServerName: "github", Transport: MCPTransportStreamableHTTP,
+			URL: "https://mcp.example.com/mcp", Tools: []RunMCPTool{{Name: "get_issue", Access: MCPToolAccessRead}},
+			Credential: &RunMCPCredential{Type: MCPCredentialBearerToken, AccessToken: "run-token", ExpiresAt: &expiresAt},
+		}},
 	})
 	if err != nil {
 		t.Fatalf("StartRun: %v", err)
 	}
 	if got.AppID != "helpin" || got.HostRunID != "host-1" {
 		t.Fatalf("unexpected start request: %#v", got)
+	}
+	if len(got.MCPServers) != 1 || got.MCPServers[0].Credential == nil || got.MCPServers[0].Credential.AccessToken != "run-token" {
+		t.Fatalf("MCP start request was not serialized: %#v", got.MCPServers)
+	}
+	responseJSON, _ := json.Marshal(run)
+	if strings.Contains(string(responseJSON), "run-token") || strings.Contains(string(responseJSON), "credential") {
+		t.Fatalf("run response leaked request-only MCP credential: %s", responseJSON)
 	}
 	if gotAuth != "Bearer token-1" {
 		t.Fatalf("authorization header = %q", gotAuth)
