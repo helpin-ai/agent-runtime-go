@@ -36,8 +36,29 @@ event history, execution details, run tools, Codex device-code authentication,
 and live Server-Sent Events.
 
 Apps can attach workspace-selected remote MCP servers to an individual run.
-The app owns MCP installation and OAuth; it should refresh or exchange the
-workspace credential before `StartRun` and send only a run-scoped token.
+The app owns MCP installation and OAuth; the optional `mcpauth` package handles
+the reusable discovery, PKCE, registration, exchange, and refresh protocol.
+The app supplies workspace/user authorization, browser routes, encrypted state
+and refresh-token storage, provider/tool policy, and notifications.
+
+```go
+import "github.com/helpin-ai/agent-runtime-go/mcpauth"
+
+oauthClient, err := mcpauth.NewClient(
+    installation.EndpointURL,
+    mcpauth.WithAllowedHosts("login.provider.example"),
+)
+configuration, err := oauthClient.Discover(ctx)
+registration, err := oauthClient.Register(ctx, configuration.Authorization.RegistrationEndpoint, callbackURL)
+authorization, err := oauthClient.NewAuthorizationRequest(configuration, registration.ClientID, callbackURL, installation.Scopes)
+
+// Store mcpauth.HashState(authorization.State), an encrypted verifier, and the
+// user/workspace/server binding before redirecting to authorization.URL.
+```
+
+At callback, atomically consume that state and call `ExchangeCode`. Call
+`Refresh` under an installation lock before runs when needed, persist a rotated
+refresh token, and send only the access token to Runtime.
 
 ```go
 run, err := client.StartRun(ctx, sdk.StartRunRequest{
@@ -62,6 +83,17 @@ run, err := client.StartRun(ctx, sdk.StartRunRequest{
 ```
 
 Credentials are request-only and are not included in the returned run.
+
+Before resuming a run paused for MCP authentication, rotate only its run-scoped
+access credential; keep refresh tokens in the host app:
+
+```go
+_, err := client.UpdateRunMCPCredential(ctx, run.ID, "workspace_mcp_456", sdk.UpdateRunMCPCredentialRequest{
+    Credential: sdk.RunMCPCredential{
+        Type: sdk.MCPCredentialBearerToken, AccessToken: accessToken, ExpiresAt: &expiresAt,
+    },
+})
+```
 
 ```go
 err = client.StreamRunEvents(ctx, runID, func(ctx context.Context, event sdk.EventEnvelope) error {

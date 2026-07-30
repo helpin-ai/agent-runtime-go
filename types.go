@@ -255,6 +255,22 @@ type RunMCPCredential struct {
 	ExpiresAt   *time.Time        `json:"expires_at,omitempty"`
 }
 
+// UpdateRunMCPCredentialRequest replaces the credential for one MCP server
+// already attached to a non-terminal run. It cannot change server or tool
+// configuration.
+type UpdateRunMCPCredentialRequest struct {
+	Credential RunMCPCredential `json:"credential"`
+}
+
+// RunMCPCredentialUpdate acknowledges a credential rotation without echoing
+// any secret material.
+type RunMCPCredentialUpdate struct {
+	RunID     string     `json:"run_id"`
+	ServerID  string     `json:"server_id"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	UpdatedAt time.Time  `json:"updated_at"`
+}
+
 type ResumeRunRequest struct {
 	Intent          string          `json:"intent"`
 	Content         string          `json:"content,omitempty"`

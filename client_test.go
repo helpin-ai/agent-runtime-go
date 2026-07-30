@@ -69,6 +69,43 @@ func TestClientStartRunDefaultsAppIDAndAuth(t *testing.T) {
 	}
 }
 
+func TestClientUpdateRunMCPCredentialDoesNotExpectSecretEcho(t *testing.T) {
+	expiresAt := time.Now().UTC().Add(time.Hour).Truncate(time.Second)
+	var got UpdateRunMCPCredentialRequest
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut || r.URL.EscapedPath() != "/v1/runs/run-1/mcp-servers/customer:io/credential" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.EscapedPath())
+		}
+		if r.URL.Query().Get("app_id") != "app-a" {
+			t.Fatalf("missing app_id query: %s", r.URL.RawQuery)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
+			t.Fatal(err)
+		}
+		_ = json.NewEncoder(w).Encode(RunMCPCredentialUpdate{
+			RunID: "run-1", ServerID: "customer:io", ExpiresAt: &expiresAt, UpdatedAt: time.Now().UTC(),
+		})
+	}))
+	defer server.Close()
+	client, err := NewClient(server.URL, WithAppID("app-a"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := client.UpdateRunMCPCredential(context.Background(), "run-1", "customer:io", UpdateRunMCPCredentialRequest{
+		Credential: RunMCPCredential{Type: MCPCredentialBearerToken, AccessToken: "rotated-secret", ExpiresAt: &expiresAt},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Credential.AccessToken != "rotated-secret" || result.ServerID != "customer:io" {
+		t.Fatalf("request=%#v result=%#v", got, result)
+	}
+	payload, _ := json.Marshal(result)
+	if strings.Contains(string(payload), "rotated-secret") || strings.Contains(string(payload), "credential") {
+		t.Fatalf("rotation response leaked request credential: %s", payload)
+	}
+}
+
 func TestClientCurrentRuntimeSurface(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/healthz" && r.URL.Query().Get("app_id") != "helpin" && r.URL.Path != "/v1/agents" {

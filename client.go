@@ -150,6 +150,23 @@ func (c *Client) GetRun(ctx context.Context, runID string) (*AgentRun, error) {
 	return &run, nil
 }
 
+// UpdateRunMCPCredential rotates only the credential for an MCP server that
+// was attached when the run started. Host apps should call this before
+// resuming a run paused for authentication.
+func (c *Client) UpdateRunMCPCredential(
+	ctx context.Context,
+	runID, serverID string,
+	req UpdateRunMCPCredentialRequest,
+) (*RunMCPCredentialUpdate, error) {
+	path := "/v1/runs/" + url.PathEscape(strings.TrimSpace(runID)) +
+		"/mcp-servers/" + url.PathEscape(strings.TrimSpace(serverID)) + "/credential"
+	var result RunMCPCredentialUpdate
+	if err := c.doJSON(ctx, http.MethodPut, path, c.appQuery(), req, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (c *Client) ListRuns(ctx context.Context) ([]AgentRun, error) {
 	var runs []AgentRun
 	if err := c.doJSON(ctx, http.MethodGet, "/v1/runs", c.appQuery(), nil, &runs); err != nil {
