@@ -42,6 +42,7 @@ func TestClientStartRunDefaultsAppIDAndAuth(t *testing.T) {
 		MCPServers: []RunMCPServer{{
 			ServerID: "workspace-mcp-1", ServerName: "github", Transport: MCPTransportStreamableHTTP,
 			URL: "https://mcp.example.com/mcp", Tools: []RunMCPTool{{Name: "get_issue", Access: MCPToolAccessRead}},
+			Skills:     []SkillRef{{Key: "github_triage"}},
 			Credential: &RunMCPCredential{Type: MCPCredentialBearerToken, AccessToken: "run-token", ExpiresAt: &expiresAt},
 		}},
 	})
@@ -51,7 +52,7 @@ func TestClientStartRunDefaultsAppIDAndAuth(t *testing.T) {
 	if got.AppID != "helpin" || got.HostRunID != "host-1" {
 		t.Fatalf("unexpected start request: %#v", got)
 	}
-	if len(got.MCPServers) != 1 || got.MCPServers[0].Credential == nil || got.MCPServers[0].Credential.AccessToken != "run-token" {
+	if len(got.MCPServers) != 1 || len(got.MCPServers[0].Skills) != 1 || got.MCPServers[0].Skills[0].Key != "github_triage" || got.MCPServers[0].Credential == nil || got.MCPServers[0].Credential.AccessToken != "run-token" {
 		t.Fatalf("MCP start request was not serialized: %#v", got.MCPServers)
 	}
 	responseJSON, _ := json.Marshal(run)

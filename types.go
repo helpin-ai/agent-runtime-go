@@ -236,6 +236,7 @@ type RunMCPServer struct {
 	Transport  string            `json:"transport"`
 	URL        string            `json:"url"`
 	Tools      []RunMCPTool      `json:"tools"`
+	Skills     []SkillRef        `json:"skills,omitempty"`
 	Credential *RunMCPCredential `json:"credential,omitempty"`
 }
 
