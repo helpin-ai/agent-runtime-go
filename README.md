@@ -73,6 +73,7 @@ run, err := client.StartRun(ctx, sdk.StartRunRequest{
             {Name: "get_issue", Access: sdk.MCPToolAccessRead},
             {Name: "create_issue", Access: sdk.MCPToolAccessWrite},
         },
+        Skills: []sdk.SkillRef{{Key: "github_triage"}},
         Credential: &sdk.RunMCPCredential{
             Type:        sdk.MCPCredentialBearerToken,
             AccessToken: shortLivedAccessToken,
