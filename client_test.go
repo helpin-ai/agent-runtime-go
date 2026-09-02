@@ -200,6 +200,9 @@ func TestClientResumeRunSendsCorrelationFields(t *testing.T) {
 		if request.ResumeID != "resume-1" || request.InteractionID != "interaction-1" || request.Intent != ResumeIntentReply {
 			t.Fatalf("unexpected resume request: %#v", request)
 		}
+		if request.TurnPolicy == nil || request.TurnPolicy.CompletionMode != TurnCompletionExplicit || request.TurnPolicy.MaxCompletionCorrections != 2 {
+			t.Fatalf("unexpected resume turn policy: %#v", request.TurnPolicy)
+		}
 		_ = json.NewEncoder(w).Encode(AgentRun{ID: "run-1", AppID: "helpin"})
 	}))
 	defer server.Close()
@@ -208,6 +211,11 @@ func TestClientResumeRunSendsCorrelationFields(t *testing.T) {
 		Intent:        ResumeIntentReply,
 		ResumeID:      "resume-1",
 		InteractionID: "interaction-1",
+		TurnPolicy: &TurnPolicy{
+			Mode:                     TurnPolicyPauseAfterAssist,
+			CompletionMode:           TurnCompletionExplicit,
+			MaxCompletionCorrections: 2,
+		},
 	}); err != nil {
 		t.Fatal(err)
 	}

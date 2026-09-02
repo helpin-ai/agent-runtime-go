@@ -35,6 +35,8 @@ const (
 
 	TurnPolicyCompleteOnFinish = "complete_on_finish"
 	TurnPolicyPauseAfterAssist = "pause_after_assistant"
+	TurnCompletionImplicit     = "implicit"
+	TurnCompletionExplicit     = "explicit_finish"
 
 	ApprovalNotRequired = "not_required"
 	ApprovalPending     = "pending"
@@ -140,9 +142,11 @@ type Usage struct {
 }
 
 type TurnPolicy struct {
-	Mode                  string `json:"mode,omitempty"`
-	IdleTimeoutSeconds    int    `json:"idle_timeout_seconds,omitempty"`
-	ExpiredResumeStrategy string `json:"expired_resume_strategy,omitempty"`
+	Mode                     string `json:"mode,omitempty"`
+	IdleTimeoutSeconds       int    `json:"idle_timeout_seconds,omitempty"`
+	ExpiredResumeStrategy    string `json:"expired_resume_strategy,omitempty"`
+	CompletionMode           string `json:"completion_mode,omitempty"`
+	MaxCompletionCorrections int    `json:"max_completion_corrections,omitempty"`
 }
 
 type AgentRunMessage struct {
@@ -279,6 +283,7 @@ type ResumeRunRequest struct {
 	ExternalActorID string          `json:"external_actor_id,omitempty"`
 	ResumeID        string          `json:"resume_id,omitempty"`
 	InteractionID   string          `json:"interaction_id,omitempty"`
+	TurnPolicy      *TurnPolicy     `json:"turn_policy,omitempty"`
 }
 
 type CodexAuthState struct {
