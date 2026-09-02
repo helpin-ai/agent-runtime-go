@@ -132,8 +132,17 @@ type Tool struct {
 	Category             string          `json:"category,omitempty"`
 	InputSchema          json.RawMessage `json:"input_schema"`
 	Mutating             bool            `json:"mutating,omitempty"`
+	RiskLevel            string          `json:"risk_level,omitempty"`
 	SupportedTargetTypes []string        `json:"supported_target_types,omitempty"`
 }
+
+// Tool risk levels classify a tool independently from its mutation flag.
+const (
+	RiskLevelRead        = "read"
+	RiskLevelRoutine     = "routine_mutation"
+	RiskLevelSensitive   = "sensitive_mutation"
+	RiskLevelDestructive = "destructive_mutation"
+)
 
 type ContentItem struct {
 	Type string `json:"type"`
@@ -152,8 +161,9 @@ type ProviderToolCallRequest struct {
 }
 
 type ToolCallResult struct {
-	Content          []ContentItem `json:"content"`
-	IsError          bool          `json:"is_error,omitempty"`
-	ApprovalRequired bool          `json:"approval_required,omitempty"`
-	InteractionID    string        `json:"interaction_id,omitempty"`
+	Content           []ContentItem   `json:"content"`
+	StructuredContent json.RawMessage `json:"structured_content,omitempty"`
+	IsError           bool            `json:"is_error,omitempty"`
+	ApprovalRequired  bool            `json:"approval_required,omitempty"`
+	InteractionID     string          `json:"interaction_id,omitempty"`
 }
