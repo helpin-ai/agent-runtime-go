@@ -12,7 +12,6 @@ func TestToolProviderMetadataJSONRoundTrip(t *testing.T) {
 		InputSchema:          json.RawMessage(`{"type":"object"}`),
 		Mutating:             true,
 		RiskLevel:            RiskLevelRoutine,
-		Aliases:              []string{"create_docs_collection"},
 		SupportedTargetTypes: []string{"workspace"},
 	}
 	payload, err := json.Marshal(original)
@@ -23,7 +22,7 @@ func TestToolProviderMetadataJSONRoundTrip(t *testing.T) {
 	if err := json.Unmarshal(payload, &decoded); err != nil {
 		t.Fatal(err)
 	}
-	if decoded.RiskLevel != RiskLevelRoutine || len(decoded.Aliases) != 1 || decoded.Aliases[0] != "create_docs_collection" {
+	if decoded.RiskLevel != RiskLevelRoutine || len(decoded.SupportedTargetTypes) != 1 || decoded.SupportedTargetTypes[0] != "workspace" {
 		t.Fatalf("metadata did not round-trip: %#v", decoded)
 	}
 }

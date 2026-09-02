@@ -133,7 +133,6 @@ type Tool struct {
 	InputSchema          json.RawMessage `json:"input_schema"`
 	Mutating             bool            `json:"mutating,omitempty"`
 	RiskLevel            string          `json:"risk_level,omitempty"`
-	Aliases              []string        `json:"aliases,omitempty"`
 	SupportedTargetTypes []string        `json:"supported_target_types,omitempty"`
 }
 
