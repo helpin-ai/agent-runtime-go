@@ -200,6 +200,9 @@ func TestClientResumeRunSendsCorrelationFields(t *testing.T) {
 		if request.ResumeID != "resume-1" || request.InteractionID != "interaction-1" || request.Intent != ResumeIntentReply {
 			t.Fatalf("unexpected resume request: %#v", request)
 		}
+		if request.MessageProvenance != "human" || request.ExternalActorID != "user-1" {
+			t.Fatalf("resume provenance lost: %#v", request)
+		}
 		if request.TurnPolicy == nil || request.TurnPolicy.CompletionMode != TurnCompletionExplicit || request.TurnPolicy.MaxCompletionCorrections != 2 {
 			t.Fatalf("unexpected resume turn policy: %#v", request.TurnPolicy)
 		}
@@ -208,9 +211,11 @@ func TestClientResumeRunSendsCorrelationFields(t *testing.T) {
 	defer server.Close()
 	client, _ := NewClient(server.URL, WithAppID("helpin"))
 	if _, err := client.ResumeRun(context.Background(), "run-1", ResumeRunRequest{
-		Intent:        ResumeIntentReply,
-		ResumeID:      "resume-1",
-		InteractionID: "interaction-1",
+		MessageProvenance: "human",
+		ExternalActorID:   "user-1",
+		Intent:            ResumeIntentReply,
+		ResumeID:          "resume-1",
+		InteractionID:     "interaction-1",
 		TurnPolicy: &TurnPolicy{
 			Mode:                     TurnPolicyPauseAfterAssist,
 			CompletionMode:           TurnCompletionExplicit,

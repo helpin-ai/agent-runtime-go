@@ -277,13 +277,14 @@ type RunMCPCredentialUpdate struct {
 }
 
 type ResumeRunRequest struct {
-	Intent          string          `json:"intent"`
-	Content         string          `json:"content,omitempty"`
-	ResponsePayload json.RawMessage `json:"response_payload,omitempty"`
-	ExternalActorID string          `json:"external_actor_id,omitempty"`
-	ResumeID        string          `json:"resume_id,omitempty"`
-	InteractionID   string          `json:"interaction_id,omitempty"`
-	TurnPolicy      *TurnPolicy     `json:"turn_policy,omitempty"`
+	MessageProvenance string          `json:"message_provenance,omitempty"`
+	Intent            string          `json:"intent"`
+	Content           string          `json:"content,omitempty"`
+	ResponsePayload   json.RawMessage `json:"response_payload,omitempty"`
+	ExternalActorID   string          `json:"external_actor_id,omitempty"`
+	ResumeID          string          `json:"resume_id,omitempty"`
+	InteractionID     string          `json:"interaction_id,omitempty"`
+	TurnPolicy        *TurnPolicy     `json:"turn_policy,omitempty"`
 }
 
 type CodexAuthState struct {
