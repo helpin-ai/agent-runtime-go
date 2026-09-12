@@ -204,22 +204,6 @@ func (c *Client) ResumeRun(ctx context.Context, runID string, req ResumeRunReque
 	return &run, nil
 }
 
-func (c *Client) StartCodexDeviceCodeAuth(ctx context.Context, runID string) (*CodexAuthState, error) {
-	var state CodexAuthState
-	if err := c.doJSON(ctx, http.MethodPost, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/codex-auth/device-code/start", c.appQuery(), nil, &state); err != nil {
-		return nil, err
-	}
-	return &state, nil
-}
-
-func (c *Client) CancelCodexDeviceCodeAuth(ctx context.Context, runID string) (*CodexAuthState, error) {
-	var state CodexAuthState
-	if err := c.doJSON(ctx, http.MethodPost, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/codex-auth/device-code/cancel", c.appQuery(), nil, &state); err != nil {
-		return nil, err
-	}
-	return &state, nil
-}
-
 func (c *Client) ApproveRun(ctx context.Context, runID string, externalActorID ...string) (*AgentRun, error) {
 	return c.ResumeRun(ctx, runID, ResumeRunRequest{
 		Intent:          ResumeIntentApprove,

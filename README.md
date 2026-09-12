@@ -32,7 +32,7 @@ page, err := client.SearchRuns(ctx, sdk.RunSearchRequest{
 ```
 
 The client covers runtime capabilities and app health, agents, runs, persisted
-event history, execution details, run tools, Codex device-code authentication,
+event history, execution details, run tools,
 and live Server-Sent Events.
 
 Apps can attach workspace-selected remote MCP servers to an individual run.
