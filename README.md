@@ -124,3 +124,62 @@ err := consumer.Run(ctx, handleEvent)
 go vet ./...
 go test ./...
 ```
+
+### Optional app-owned credentials
+
+Existing calls keep using the runtime's configured provider key. To override it for
+one run, send credentials from your backend only:
+
+```go
+run, err := client.StartRun(ctx, sdk.StartRunRequest{
+    AgentID: agentID,
+    Target: sdk.TargetRef{Type: "workspace", ID: workspaceID},
+    Model: &sdk.RunModel{Provider: "openai", Model: "gpt-5.6-luna"},
+    ModelCredential: &sdk.ModelCredential{
+        Type: "api_key", APIKey: apiKey, ConnectionID: connectionID,
+    },
+})
+```
+
+The runtime must configure `AGENT_RUNTIME_MODEL_CREDENTIAL_ENCRYPTION_KEY`.
+Credentials are encrypted per run, excluded from public run data, and cleared on
+terminal outcomes. An invalid supplied key never falls back to the runtime key.
+`UpdateRunModelCredential` replaces a credential on an active run;
+`RevokeRunModelCredential` prevents subsequent model requests. Replacement cannot
+change the connection or ChatGPT account identity.
+
+`chatgptauth` implements optional device authentication without a Codex process:
+
+```go
+auth, err := chatgptauth.NewClient(chatgptauth.Config{})
+if err != nil { return err }
+session, err := auth.StartDeviceLogin(ctx)
+if err != nil { return err }
+// Show session.VerificationURL and session.UserCode to the connecting user.
+// Encrypt the session in your app database and serialize each poll with a row lock.
+result, err := auth.PollDeviceLogin(ctx, session)
+if err != nil { return err }
+if result.Pending { /* persist session.NextPollAt; poll later */ }
+if result.Token != nil { /* encrypt and save the whole token in the app */ }
+```
+
+For inference use `provider: "openai_chatgpt"` and a credential with `Type: "oauth"`,
+`AccessToken`, `ExpiresAt`, `ConnectionID`, and `AccountID`. Never send the refresh
+token to the runtime. The app implements a service-authenticated refresh callback
+accepting `ModelCredentialRefreshRequest` and returning
+`UpdateRunModelCredentialRequest`. Verify the owning app/user/workspace and active
+run; lock the connection, refresh with `auth.Refresh`, save the rotated refresh
+token atomically, then return only the access credential. Compare
+`CredentialFingerprint` with SHA-256 of your current access token to avoid repeated
+refreshes for concurrent 401 callbacks. Account changes require a new connection.
+
+Device polling is one call at a time, respects the stored polling interval, and
+expires after 15 minutes. Pending/429 updates must be saved. Transient failures can
+be retried; expired, denied, revoked, or account-changed sessions need reconnection.
+Errors and Go string formatting redact tokens. JWT account extraction reads routing
+metadata from the trusted exchange; it is not JWT verification or user authorization.
+
+Subscription support is opt-in and must be validated with an eligible account in
+the intended deployment before enabling it. Device authentication support does not
+establish a generally supported third-party hosted subscription API. The SDK owns
+no connection database, refresh scheduler, credential file, or billing policy.

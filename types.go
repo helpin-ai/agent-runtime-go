@@ -125,12 +125,14 @@ type AgentRun struct {
 }
 
 type RunInput struct {
-	Instructions   string                 `json:"instructions,omitempty"`
-	AllowedTools   []string               `json:"allowed_tools,omitempty"`
-	Trigger        map[string]interface{} `json:"trigger,omitempty"`
-	Metadata       map[string]interface{} `json:"metadata,omitempty"`
-	ContextSummary string                 `json:"context_summary,omitempty"`
-	TurnPolicy     TurnPolicy             `json:"turn_policy,omitempty"`
+	Model            *RunModel              `json:"model,omitempty"`
+	CredentialSource string                 `json:"credential_source,omitempty"`
+	Instructions     string                 `json:"instructions,omitempty"`
+	AllowedTools     []string               `json:"allowed_tools,omitempty"`
+	Trigger          map[string]interface{} `json:"trigger,omitempty"`
+	Metadata         map[string]interface{} `json:"metadata,omitempty"`
+	ContextSummary   string                 `json:"context_summary,omitempty"`
+	TurnPolicy       TurnPolicy             `json:"turn_policy,omitempty"`
 }
 
 type Usage struct {
@@ -215,6 +217,8 @@ type WorkspaceLease struct {
 }
 
 type StartRunRequest struct {
+	Model           *RunModel              `json:"model,omitempty"`
+	ModelCredential *ModelCredential       `json:"model_credential,omitempty"`
 	AppID           string                 `json:"app_id"`
 	HostRunID       string                 `json:"host_run_id,omitempty"`
 	AgentID         string                 `json:"agent_id"`
@@ -315,10 +319,12 @@ type AppendArtifactRequest struct {
 }
 
 type ProviderCapability struct {
-	Name              string `json:"name"`
-	Configured        bool   `json:"configured"`
-	DefaultModel      string `json:"default_model,omitempty"`
-	BaseURLOverridden bool   `json:"base_url_overridden"`
+	AuthModes                []string `json:"auth_modes,omitempty"`
+	RunCredentialsConfigured bool     `json:"run_credentials_configured"`
+	Name                     string   `json:"name"`
+	Configured               bool     `json:"configured"`
+	DefaultModel             string   `json:"default_model,omitempty"`
+	BaseURLOverridden        bool     `json:"base_url_overridden"`
 }
 
 type StoreInfo struct {
