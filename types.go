@@ -319,6 +319,7 @@ type AppendArtifactRequest struct {
 }
 
 type ProviderCapability struct {
+	LosslessResponseReplay   bool     `json:"lossless_response_replay"`
 	AuthModes                []string `json:"auth_modes,omitempty"`
 	RunCredentialsConfigured bool     `json:"run_credentials_configured"`
 	Name                     string   `json:"name"`
@@ -357,8 +358,9 @@ type AppComponent struct {
 }
 
 type AppSummary struct {
-	AppID      string         `json:"app_id"`
-	Components []AppComponent `json:"components,omitempty"`
+	RequireRunModelCredentials bool           `json:"require_run_model_credentials"`
+	AppID                      string         `json:"app_id"`
+	Components                 []AppComponent `json:"components,omitempty"`
 }
 
 type Capabilities struct {

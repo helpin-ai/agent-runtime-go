@@ -12,6 +12,8 @@ import (
 type RunModel struct {
 	Provider string `json:"provider"`
 	Model    string `json:"model"`
+	// Controls replaces legacy agent model controls when present, even if empty.
+	Controls *ModelControls `json:"controls,omitempty"`
 }
 
 // ModelCredential is request-only. Send from your backend, never place it in
