@@ -183,3 +183,18 @@ Subscription support is opt-in and must be validated with an eligible account in
 the intended deployment before enabling it. Device authentication support does not
 establish a generally supported third-party hosted subscription API. The SDK owns
 no connection database, refresh scheduler, credential file, or billing policy.
+
+### Compatible Chat Completions endpoints
+
+`RunModel{Provider: "openai_compatible", Model: "your-model", Endpoint: ...}`
+uses the Chat Completions transport. Copy the `ModelEndpoint` binding from the
+app's advertised `model_endpoints`: ID, canonical base URL and authentication mode
+must all match Runtime's trusted app configuration. The endpoint cannot be
+supplied for a fixed provider such as `openai` or `anthropic`.
+
+Always send a `ModelCredential`: use `Type: "api_key"` with the key, or explicitly
+`Type: "none"` for an approved no-auth endpoint. No-auth is not omission of run
+credentials and never invokes environment defaults. Local HTTP requires explicit
+administrator permission in Runtime; `ValidateModelEndpoint` checks structure
+only. Compatible routes support transcript continuation, not lossless Responses
+state, and do not accept provider-specific reasoning/service-tier controls.

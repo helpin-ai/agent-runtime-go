@@ -68,9 +68,16 @@ func ValidateRunModel(model *RunModel) error {
 		return nil
 	}
 	switch model.Provider {
-	case "openai", "anthropic", "openrouter", "openrouter_responses", "openai_chatgpt":
+	case "openai", "anthropic", "openrouter", "openrouter_responses", "openai_chatgpt", "openai_compatible":
 	default:
 		return fmt.Errorf("unsupported model provider")
+	}
+	if model.Provider == "openai_compatible" {
+		if err := ValidateModelEndpoint(model.Endpoint); err != nil {
+			return err
+		}
+	} else if model.Endpoint != nil {
+		return fmt.Errorf("endpoint is only supported for openai_compatible")
 	}
 	if strings.TrimSpace(model.Model) == "" || len(model.Model) > 256 {
 		return fmt.Errorf("model.model is required and must not exceed 256 characters")

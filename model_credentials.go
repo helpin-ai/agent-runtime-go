@@ -10,10 +10,19 @@ import (
 
 // RunModel pins an execution route without modifying the reusable agent.
 type RunModel struct {
-	Provider string `json:"provider"`
-	Model    string `json:"model"`
+	Provider string         `json:"provider"`
+	Model    string         `json:"model"`
+	Endpoint *ModelEndpoint `json:"endpoint,omitempty"`
 	// Controls replaces legacy agent model controls when present, even if empty.
 	Controls *ModelControls `json:"controls,omitempty"`
+}
+
+// ModelEndpoint pins an administrator-approved Chat Completions destination.
+// Runtime verifies the complete binding against trusted app configuration.
+type ModelEndpoint struct {
+	ID       string `json:"id" yaml:"id"`
+	BaseURL  string `json:"base_url" yaml:"base_url"`
+	AuthMode string `json:"auth_mode" yaml:"auth_mode"`
 }
 
 // ModelCredential is request-only. Send from your backend, never place it in
