@@ -44,3 +44,23 @@ func TestValidateRunModelControls(t *testing.T) {
 		})
 	}
 }
+
+func TestServiceTierChoicesAndAliases(t *testing.T) {
+	for _, tier := range append(ServiceTiers(), "default", "priority") {
+		if err := ValidateModelControls("openai", ModelControls{ServiceTier: &tier}); err != nil {
+			t.Fatalf("advertised tier %s rejected: %v", tier, err)
+		}
+	}
+	if NormalizeServiceTier(" priority ") != "fast" || NormalizeServiceTier("default") != "standard" {
+		t.Fatal("aliases changed")
+	}
+	bad := "unknown"
+	if err := ValidateModelControls("openai", ModelControls{ServiceTier: &bad}); err == nil {
+		t.Fatal("unknown tier accepted")
+	}
+	choices := ServiceTiers()
+	choices[0] = "corrupted"
+	if ServiceTiers()[0] != "standard" {
+		t.Fatal("caller mutated supported choices")
+	}
+}

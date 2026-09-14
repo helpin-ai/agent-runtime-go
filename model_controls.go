@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -28,6 +29,24 @@ func ReasoningEfforts() []string {
 	return []string{"none", "minimal", "low", "medium", "high", "xhigh"}
 }
 
+// ServiceTiers returns canonical user-facing values. Provider-native aliases
+// default and priority remain accepted through NormalizeServiceTier.
+func ServiceTiers() []string {
+	return []string{"standard", "fast", "flex", "auto"}
+}
+
+// NormalizeServiceTier maps provider-native aliases to canonical control names.
+func NormalizeServiceTier(value string) string {
+	switch value = strings.ToLower(strings.TrimSpace(value)); value {
+	case "default":
+		return "standard"
+	case "priority":
+		return "fast"
+	default:
+		return value
+	}
+}
+
 // ValidateModelControls is the shared host/runtime validator for request controls.
 func ValidateModelControls(provider string, controls ModelControls) error {
 	provider = strings.ToLower(strings.TrimSpace(provider))
@@ -46,10 +65,8 @@ func ValidateModelControls(provider string, controls ModelControls) error {
 	}
 	tier := modelControlValue(controls.ServiceTier)
 	if tier != "" {
-		switch tier {
-		case "standard", "fast", "auto", "default", "flex", "priority":
-		default:
-			return fmt.Errorf("service_tier must be one of standard, fast, flex, auto, default, priority")
+		if !slices.Contains(ServiceTiers(), NormalizeServiceTier(tier)) {
+			return fmt.Errorf("service_tier must be one of %s (aliases: default, priority)", strings.Join(ServiceTiers(), ", "))
 		}
 		if provider != "openai" && provider != "openai_chatgpt" {
 			return fmt.Errorf("service_tier is only supported for provider openai or openai_chatgpt")
