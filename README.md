@@ -1,5 +1,9 @@
 # Agent Runtime Go SDK
 
+Licensed under [Apache-2.0](LICENSE). Third-party material retains its own
+licenses and notices, including the OpenAI Codex attribution in
+[chatgptauth/NOTICE](chatgptauth/NOTICE).
+
 Public Go contracts and HTTP client for Agent Runtime hosts.
 
 This package contains only wire contracts, event helpers, host callback DTOs,
