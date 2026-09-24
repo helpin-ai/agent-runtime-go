@@ -32,6 +32,7 @@ const (
 	PauseReasonHumanApproval = "human_approval"
 	PauseReasonAuth          = "authentication"
 	PauseReasonUserMessage   = "awaiting_user_message"
+	PauseReasonManual        = "manual"
 
 	TurnPolicyCompleteOnFinish = "complete_on_finish"
 	TurnPolicyPauseAfterAssist = "pause_after_assistant"
@@ -44,6 +45,7 @@ const (
 	ApprovalRejected    = "rejected"
 
 	ResumeIntentReply          = "reply"
+	ResumeIntentContinue       = "continue"
 	ResumeIntentApprove        = "approve"
 	ResumeIntentRequestChanges = "request_changes"
 	ResumeIntentAuthCompleted  = "auth_completed"

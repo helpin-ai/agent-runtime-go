@@ -204,6 +204,16 @@ func (c *Client) ResumeRun(ctx context.Context, runID string, req ResumeRunReque
 	return &run, nil
 }
 
+// PauseRun requests a durable run to stop at its current execution checkpoint.
+// The returned run may still be running until its worker acknowledges the pause.
+func (c *Client) PauseRun(ctx context.Context, runID string) (*AgentRun, error) {
+	var run AgentRun
+	if err := c.doJSON(ctx, http.MethodPost, "/v1/runs/"+url.PathEscape(strings.TrimSpace(runID))+"/pause", c.appQuery(), nil, &run); err != nil {
+		return nil, err
+	}
+	return &run, nil
+}
+
 func (c *Client) ApproveRun(ctx context.Context, runID string, externalActorID ...string) (*AgentRun, error) {
 	return c.ResumeRun(ctx, runID, ResumeRunRequest{
 		Intent:          ResumeIntentApprove,

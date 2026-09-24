@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -68,6 +69,29 @@ func TestClientStartRunDefaultsAppIDAndAuth(t *testing.T) {
 	if run.ID != "run-1" || run.AppID != "helpin" {
 		t.Fatalf("unexpected run: %#v", run)
 	}
+}
+
+func TestClientPauseRunUsesAppScopedEndpoint(t *testing.T) {
+	httpClient := &http.Client{Transport: pauseRoundTripper(func(r *http.Request) (*http.Response, error) {
+		if r.Method != http.MethodPost || r.URL.Path != "/v1/runs/run-1/pause" || r.URL.Query().Get("app_id") != "helpin" {
+			t.Errorf("unexpected pause request: %s %s", r.Method, r.URL.String())
+		}
+		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"id":"run-1","status":"running"}`)), Request: r}, nil
+	})}
+	client, err := NewClient("https://runtime.example.test", WithAppID("helpin"), WithHTTPClient(httpClient))
+	if err != nil {
+		t.Fatal(err)
+	}
+	run, err := client.PauseRun(context.Background(), "run-1")
+	if err != nil || run.ID != "run-1" {
+		t.Fatalf("pause request failed: run=%#v err=%v", run, err)
+	}
+}
+
+type pauseRoundTripper func(*http.Request) (*http.Response, error)
+
+func (f pauseRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	return f(request)
 }
 
 func TestClientUpdateRunMCPCredentialDoesNotExpectSecretEcho(t *testing.T) {
