@@ -229,3 +229,15 @@ Refresh permission at least every 30 seconds while the host is running; it
 expires after one minute. Revocation or expiration interrupts background work
 without spending a retry. Repeated submissions of the same revision do not
 restart completed jobs. Scope and retry state are preserved across restarts.
+
+## Browser controls and raw events
+
+Use `GetBrowserStatus`, `OpenBrowser`, `TakeOverBrowser`, `ReleaseBrowser`,
+and `CloseBrowser` for the runtime's existing extension-browser controls.
+`ReleaseBrowser` sends the runtime's `handback` action. Browser ownership and
+cleanup stay in the runtime; hosts decide when the user takes control.
+
+`OpenRunEvents` returns the raw SSE response for forwarding without changing
+frames. The caller must close its body and cancel the request context when
+the downstream connection closes. The HTTP client's JSON timeout does not
+limit the stream. `StreamRunEvents` uses the same transport for parsed events.

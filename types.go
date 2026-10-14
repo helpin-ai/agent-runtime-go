@@ -126,6 +126,15 @@ type AgentRun struct {
 	UpdatedAt       time.Time       `json:"updated_at"`
 }
 
+// Terminal reports whether execution has finished rather than paused.
+func (r AgentRun) Terminal() bool {
+	switch r.Status {
+	case "completed", "failed", "cancelled":
+		return true
+	}
+	return false
+}
+
 type RunInput struct {
 	Model            *RunModel              `json:"model,omitempty"`
 	CredentialSource string                 `json:"credential_source,omitempty"`
@@ -198,6 +207,7 @@ type AgentRunInteraction struct {
 }
 
 type ToolCall struct {
+	Status           string          `json:"status,omitempty"`
 	ID               string          `json:"id"`
 	AppID            string          `json:"app_id"`
 	RunID            string          `json:"run_id"`
@@ -370,6 +380,7 @@ type AppSummary struct {
 }
 
 type Capabilities struct {
+	ExecutionIsolation string               `json:"execution_isolation,omitempty"`
 	RuntimeKinds       []string             `json:"runtime_kinds"`
 	Providers          []ProviderCapability `json:"providers"`
 	Store              StoreInfo            `json:"store"`

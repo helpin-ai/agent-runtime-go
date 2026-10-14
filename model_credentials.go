@@ -50,6 +50,11 @@ type ModelCredentialRefreshRequest struct {
 	Reason                string `json:"reason"`
 }
 
+// ModelCredentialRefreshResponse returns a request-only credential to the runtime.
+type ModelCredentialRefreshResponse struct {
+	Credential ModelCredential `json:"credential"`
+}
+
 type UpdateRunModelCredentialRequest struct {
 	Credential ModelCredential `json:"credential"`
 }

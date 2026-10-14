@@ -365,6 +365,9 @@ func (c *Client) UpsertAgent(ctx context.Context, agent Agent) (*Agent, error) {
 }
 
 func (c *Client) UpdateAgent(ctx context.Context, agentID string, agent Agent) (*Agent, error) {
+	if strings.TrimSpace(agentID) == "" {
+		return nil, fmt.Errorf("agent id is required")
+	}
 	if strings.TrimSpace(agent.AppID) == "" {
 		agent.AppID = c.AppID()
 	}

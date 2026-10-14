@@ -318,3 +318,13 @@ func TestClientReturnsHTTPStatusError(t *testing.T) {
 		t.Fatalf("unexpected status error: %#v", statusErr)
 	}
 }
+
+func TestUpsertAgentRejectsEmptyIDBeforeHTTP(t *testing.T) {
+	client, err := NewClient("http://127.0.0.1:1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.UpsertAgent(context.Background(), Agent{}); err == nil || err.Error() != "agent id is required" {
+		t.Fatalf("empty agent ID: %v", err)
+	}
+}
