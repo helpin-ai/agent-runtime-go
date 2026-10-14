@@ -202,3 +202,30 @@ credentials and never invokes environment defaults. Local HTTP requires explicit
 administrator permission in Runtime; `ValidateModelEndpoint` checks structure
 only. Compatible routes support transcript continuation, not lossless Responses
 state, and do not accept provider-specific reasoning/service-tier controls.
+
+## Background memory learning
+
+The existing client provides `SubmitMemoryLearning`, `MemoryLearningJobs`,
+`RetryMemoryLearning`, and `SetMemoryLearningPolicy`. The runtime owns durable
+job processing; the SDK is the typed transport contract.
+
+Hosts submit a bank, stable source ID, and source revision. The runtime resolves
+that evidence through the app's trusted `memory_learning_callback` configuration;
+source bodies and model credentials stay in the host. The callback accepts a
+`MemoryLearningJob` and returns a `MemoryLearningResult`.
+
+```go
+job, err := client.SubmitMemoryLearning(ctx, sdk.MemoryLearningJob{
+    BankID: "bot:researcher", Kind: "extraction",
+    SourceID: "episode/task-1", Revision: evidenceRevision,
+})
+err = client.SetMemoryLearningPolicy(ctx, sdk.MemoryLearningPolicy{
+    AllowExtraction: botsAreIdle, AllowConsolidation: botsAreIdleLongEnough,
+})
+jobs, err := client.MemoryLearningJobs(ctx, "bot:researcher")
+```
+
+Refresh permission at least every 30 seconds while the host is running; it
+expires after one minute. Revocation or expiration interrupts background work
+without spending a retry. Repeated submissions of the same revision do not
+restart completed jobs. Scope and retry state are preserved across restarts.
