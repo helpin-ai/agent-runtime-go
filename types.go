@@ -396,6 +396,8 @@ type Capabilities struct {
 	RunMCP             RunMCPCapability     `json:"run_mcp"`
 	// RunGroups is nil when the runtime predates run groups.
 	RunGroups *FeatureCapability `json:"run_groups,omitempty"`
+	// WorkJobs is nil when the runtime predates work jobs.
+	WorkJobs *FeatureCapability `json:"work_jobs,omitempty"`
 }
 
 type RunMCPCapability struct {
