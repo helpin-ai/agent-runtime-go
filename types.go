@@ -244,6 +244,10 @@ type StartRunRequest struct {
 	Metadata        map[string]interface{} `json:"metadata,omitempty"`
 	TurnPolicy      TurnPolicy             `json:"turn_policy,omitempty"`
 	MCPServers      []RunMCPServer         `json:"mcp_servers,omitempty"`
+	// GroupID joins the run to a host-owned run group at creation. It requires
+	// the run_groups capability; runtimes without it reject the request.
+	GroupID     string `json:"group_id,omitempty"`
+	ParentRunID string `json:"parent_run_id,omitempty"`
 }
 
 // RunMCPServer attaches an app-managed remote MCP server to one agent run.
@@ -390,6 +394,8 @@ type Capabilities struct {
 	ServiceAuthEnabled bool                 `json:"service_auth_enabled"`
 	Tools              []Tool               `json:"tools"`
 	RunMCP             RunMCPCapability     `json:"run_mcp"`
+	// RunGroups is nil when the runtime predates run groups.
+	RunGroups *FeatureCapability `json:"run_groups,omitempty"`
 }
 
 type RunMCPCapability struct {
