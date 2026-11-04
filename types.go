@@ -411,6 +411,9 @@ type RunSearchRequest struct {
 	Status string
 	Limit  int
 	Offset int
+	// IncludeChildren lists runs the runtime created itself (work-job
+	// workers). It requires the work_jobs capability.
+	IncludeChildren bool
 }
 
 type RunPage struct {

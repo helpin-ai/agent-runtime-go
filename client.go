@@ -189,6 +189,9 @@ func (c *Client) SearchRuns(ctx context.Context, search RunSearchRequest) (*RunP
 	if search.Offset > 0 {
 		query.Set("offset", strconv.Itoa(search.Offset))
 	}
+	if search.IncludeChildren {
+		query.Set("include_children", "true")
+	}
 	var page RunPage
 	if err := c.doJSON(ctx, http.MethodGet, "/v1/runs/search", query, nil, &page); err != nil {
 		return nil, err
