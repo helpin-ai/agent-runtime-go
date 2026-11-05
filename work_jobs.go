@@ -42,6 +42,10 @@ const (
 	WorkJobWaitingRetryBackoff = "retry_backoff" // only items in retry backoff remain
 	WorkJobWaitingDependencies = "dependencies"  // only items with unmet dependencies remain
 	WorkJobWaitingUnavailable  = "unavailable"   // this runtime cannot execute the job now
+	// WorkJobWaitingUncertainEffects: a worker that made changes (a mutating
+	// tool call) stopped with unresolved items; retrying them could repeat
+	// those changes, so they wait until the user resumes the job.
+	WorkJobWaitingUncertainEffects = "uncertain_effects"
 )
 
 const (
