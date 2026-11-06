@@ -229,17 +229,19 @@ type WorkItemPage struct {
 }
 
 type WorkAttempt struct {
-	ID         string     `json:"id"`
-	JobID      string     `json:"job_id"`
-	RunID      string     `json:"run_id,omitempty"`
-	State      string     `json:"state"`
-	ItemIDs    []string   `json:"item_ids"`
-	Accepted   int        `json:"accepted"`
-	Generation int64      `json:"generation"`
-	Outcome    string     `json:"outcome,omitempty"`
-	Tokens     int64      `json:"tokens"`
-	StartedAt  time.Time  `json:"started_at"`
-	EndedAt    *time.Time `json:"ended_at,omitempty"`
+	ID         string   `json:"id"`
+	JobID      string   `json:"job_id"`
+	RunID      string   `json:"run_id,omitempty"`
+	State      string   `json:"state"`
+	ItemIDs    []string `json:"item_ids"`
+	Accepted   int      `json:"accepted"`
+	Generation int64    `json:"generation"`
+	// SpecRevision is the job specification the batch was given.
+	SpecRevision int        `json:"spec_revision"`
+	Outcome      string     `json:"outcome,omitempty"`
+	Tokens       int64      `json:"tokens"`
+	StartedAt    time.Time  `json:"started_at"`
+	EndedAt      *time.Time `json:"ended_at,omitempty"`
 }
 
 type WorkJobEvent struct {
