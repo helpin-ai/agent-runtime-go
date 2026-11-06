@@ -237,9 +237,12 @@ type WorkAttempt struct {
 	Accepted   int      `json:"accepted"`
 	Generation int64    `json:"generation"`
 	// SpecRevision is the job specification the batch was given.
-	SpecRevision int        `json:"spec_revision"`
-	Outcome      string     `json:"outcome,omitempty"`
-	Tokens       int64      `json:"tokens"`
+	SpecRevision int    `json:"spec_revision"`
+	Outcome      string `json:"outcome,omitempty"`
+	Tokens       int64  `json:"tokens"`
+	// UsagePending reports a finished attempt whose worker usage is not yet
+	// known; its reservation still counts against the budget.
+	UsagePending bool       `json:"usage_pending,omitempty"`
 	StartedAt    time.Time  `json:"started_at"`
 	EndedAt      *time.Time `json:"ended_at,omitempty"`
 }
