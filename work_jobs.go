@@ -76,7 +76,15 @@ const (
 
 // WorkJobSpec is the pinned contract every worker receives. Revisions create
 // a new SpecRevision; accepted results record the revision they satisfied.
+// WorkJobSteering reaches active and future workers at their next safe boundary.
+// Tool restrictions are cumulative for each worker; accepted results are retained.
+type WorkJobSteering struct {
+	Content     string   `json:"content"`
+	DeniedTools []string `json:"denied_tools,omitempty"`
+}
+
 type WorkJobSpec struct {
+	Steering *WorkJobSteering `json:"steering,omitempty"`
 	// Objective is shown to the user and to every worker.
 	Objective string `json:"objective"`
 	// Instructions tell a worker how to process one item.
