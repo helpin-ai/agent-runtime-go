@@ -384,6 +384,7 @@ type AppSummary struct {
 }
 
 type Capabilities struct {
+	Steering           *FeatureCapability   `json:"steering,omitempty"`
 	ExecutionIsolation string               `json:"execution_isolation,omitempty"`
 	RuntimeKinds       []string             `json:"runtime_kinds"`
 	Providers          []ProviderCapability `json:"providers"`

@@ -241,3 +241,23 @@ cleanup stay in the runtime; hosts decide when the user takes control.
 frames. The caller must close its body and cancel the request context when
 the downstream connection closes. The HTTP client's JSON timeout does not
 limit the stream. `StreamRunEvents` uses the same transport for parsed events.
+
+### Steering and worker credential recovery
+
+`Client.SteerRun` persists a revision-checked instruction on an existing run;
+`Client.RunSteering` returns its acknowledgements. Keep `CommandID` stable when
+retrying a request. `accepted` means queued, `applied` means checkpointed or
+explicitly acknowledged, and `not_applied` means the run ended first. Steering
+never resumes a paused run. `DeniedTools` only restricts access and does not
+cancel calls already admitted.
+
+For jobs, revise `WorkJobSpec.Steering` to reach active and future workers while
+retaining accepted results. Inspect individual worker receipts before claiming
+application. `WorkJobCredentials` returns an opaque version and connection IDs;
+`UpdateWorkJobCredentials` rotates existing encrypted attachments using that
+version. Rotate the template before blocked runs, then resolve their existing
+authentication interactions. Do not replace a job to recover authentication.
+
+Native runtimes apply steering at model-step boundaries. External A2A agents
+must advertise `A2ASteeringExtension` and implement its matching structured
+acknowledgement contract; A2A alone does not imply steering support.
